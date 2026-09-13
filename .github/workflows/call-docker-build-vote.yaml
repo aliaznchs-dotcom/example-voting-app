@@ -27,16 +27,17 @@ jobs:
 
     permissions:
       contents: read
-      packages: write # needed to push docker image to ghcr.io
+      # Only grant write permissions on push to main, not on pull_request
+      packages: ${{ github.event_name == 'push' && 'write' || 'read' }}
       pull-requests: write # needed to create and update comments in PRs
     
     secrets:
 
-      # Only needed if with:dockerhub-enable is true below
-      dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
+      # Only pass credentials on push to main, not on pull_request
+      dockerhub-username: ${{ github.event_name == 'push' && secrets.DOCKERHUB_USERNAME || '' }}
 
-      # Only needed if with:dockerhub-enable is true below
-      dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
+      # Only pass credentials on push to main, not on pull_request
+      dockerhub-token: ${{ github.event_name == 'push' && secrets.DOCKERHUB_TOKEN || '' }}
 
     with:
       
@@ -44,8 +45,9 @@ jobs:
       ### ENABLE ONE OR BOTH REGISTRIES
       ### tell docker where to push.
       ### NOTE if Docker Hub is set to true, you must set secrets above and also add account/repo/tags below
-      dockerhub-enable: true
-      ghcr-enable: true
+      # Only enable registry publication on push to main, not on pull_request (build-only for PRs)
+      dockerhub-enable: ${{ github.event_name == 'push' }}
+      ghcr-enable: ${{ github.event_name == 'push' }}
 
       ### REQUIRED 
       ### A list of the account/repo names for docker build. List should match what's enabled above
